@@ -4,7 +4,7 @@ from agents import set_default_openai_key, Agent, Runner, function_tool
 from pydantic import BaseModel
 
 # Set your API key (keep it secret in production!)
-set_default_openai_key("sk-proj-...")  # DON'T expose in public repos
+set_default_openai_key("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")
 
 # Define agents
 assistant_agent = Agent(
