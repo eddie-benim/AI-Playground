@@ -4,13 +4,9 @@ import nest_asyncio
 from agents import set_default_openai_key, Agent, Runner, function_tool
 from pydantic import BaseModel
 
-# Patch the event loop to avoid runtime errors in Streamlit
 nest_asyncio.apply()
-
-# Set your API key from Streamlit secrets
 set_default_openai_key(st.secrets["OPENAI_API_KEY"])
 
-# Define agents
 assistant_agent = Agent(
     name="Assistant",
     instructions="You are a helpful assistant.",
@@ -58,34 +54,33 @@ weather_agent = Agent(
     model="gpt-4o"
 )
 
-# 🧠 Run async safely (Streamlit compatible)
 def run_async_task(task):
     return asyncio.get_event_loop().run_until_complete(task)
 
-# 🧠 OpenAI Agent SDK Demo
 st.title("🧠 OpenAI Agent SDK Demo")
 
-# --- Static Buttons ---
 if st.button("Generate Haiku"):
     result = run_async_task(Runner.run(assistant_agent, "Write a haiku about recursion in programming."))
     st.write("### ✍️ Haiku Output")
     st.success(result.final_output)
 
-if st.button("Ask Triage Agent: 'What is life?'"):
-    result = run_async_task(Runner.run(triage_agent, "What is life?"))
-    st.write("### 🧭 Routed Answer")
-    st.info(result.final_output)
-
-# --- New: User Input for Routing ---
 st.markdown("---")
 st.subheader("Ask a question and let the Triage Agent route it:")
 
 user_input = st.text_input("💬 Enter your question here")
 
+def is_valid_question(question: str) -> bool:
+    keywords = ["math", "algebra", "geometry", "calculus", "equation", "number",
+                "history", "historical", "war", "president", "revolution", "empire"]
+    return any(kw in question.lower() for kw in keywords)
+
 if st.button("Submit Question"):
-    if user_input.strip():
+    if not user_input.strip():
+        st.warning("Please enter a question before submitting.")
+    elif not is_valid_question(user_input):
+        st.error("Invalid input. Please ask a question related to math or history.")
+    else:
         result = run_async_task(Runner.run(triage_agent, user_input))
         st.write("### 📬 Triage Agent Response")
         st.info(result.final_output)
-    else:
-        st.warning("Please enter a question before submitting.")
+        st.caption(f"Response by: {result.last_used_agent.name}")
