@@ -1,10 +1,12 @@
-import asyncio
 import streamlit as st
+import asyncio
 from agents import set_default_openai_key, Agent, Runner, function_tool
 from pydantic import BaseModel
 
-set_default_openai_key("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")
+# Set your API key (keep it secret in production!)
+set_default_openai_key("sk-proj-...")  # DON'T expose in public repos
 
+# Define agents
 assistant_agent = Agent(
     name="Assistant",
     instructions="You are a helpful assistant.",
@@ -16,7 +18,7 @@ math_agent = Agent(name="Math Tutor", instructions="Help with math questions.", 
 
 triage_agent = Agent(
     name="Triage Agent",
-    instructions="Route the question to the appropriate tutor",
+    instructions="Route the question to the appropriate tutor.",
     handoffs=[history_agent, math_agent],
     model="gpt-4.1-nano"
 )
@@ -43,15 +45,25 @@ weather_agent = Agent(
     model="gpt-4.1-nano"
 )
 
-async def main():
-    st.title("Agent Demo")
+# 🧠 Helper function to run async safely
+def run_async_task(task):
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    if loop.is_running():
+        return asyncio.ensure_future(task)
+    else:
+        return loop.run_until_complete(task)
 
-    result1 = await Runner.run(assistant_agent, "Write a haiku about recursion in programming.")
-    st.subheader("Haiku:")
-    st.write(result1.final_output)
+# 🧪 Streamlit UI
+st.title("Agent SDK Demo")
 
-    result2 = await Runner.run(triage_agent, "What is life?")
-    st.subheader("Triage Result:")
-    st.write(result2.final_output)
+if st.button("Generate Haiku"):
+    result = run_async_task(Runner.run(assistant_agent, "Write a haiku about recursion in programming."))
+    st.write(result.final_output)
 
-asyncio.run(main())
+if st.button("Ask Triage Agent: 'What is life?'"):
+    result = run_async_task(Runner.run(triage_agent, "What is life?"))
+    st.write(result.final_output)
