@@ -1,7 +1,7 @@
 import streamlit as st
 import asyncio
 import nest_asyncio
-from agents import set_default_openai_key, Agent, Runner, function_tool
+from agents import set_default_openai_key, Agent, Runner
 from pydantic import BaseModel
 
 nest_asyncio.apply()
@@ -32,25 +32,15 @@ triage_agent = Agent(
     model="gpt-4o"
 )
 
-class HomeworkAnswer(BaseModel):
-    is_homework: bool
-    explanation: str
+class TopicLabel(BaseModel):
+    topic: str
 
-homework_agent = Agent(
-    name="Homework Checker",
-    instructions="Determine if the question is homework and provide an explanation if it is.",
-    output_type=HomeworkAnswer,
-    model="gpt-4o"
-)
-
-@function_tool
-def get_weather(city: str) -> str:
-    return f"The current weather in {city} is sunny."
-
-weather_agent = Agent(
-    name="Weather Agent",
-    instructions="You can answer questions about the weather.",
-    tools=[get_weather],
+topic_classifier_agent = Agent(
+    name="Topic Classifier",
+    instructions=(
+        "Classify the question topic. Respond with only one word: 'math', 'history', or 'unknown'."
+    ),
+    output_type=TopicLabel,
     model="gpt-4o"
 )
 
@@ -69,18 +59,17 @@ st.subheader("Ask a question and let the Triage Agent route it:")
 
 user_input = st.text_input("💬 Enter your question here")
 
-def is_valid_question(question: str) -> bool:
-    keywords = ["math", "algebra", "geometry", "calculus", "equation", "number",
-                "history", "historical", "war", "president", "revolution", "empire"]
-    return any(kw in question.lower() for kw in keywords)
-
 if st.button("Submit Question"):
     if not user_input.strip():
         st.warning("Please enter a question before submitting.")
-    elif not is_valid_question(user_input):
-        st.error("Invalid input. Please ask a question related to math or history.")
     else:
-        result = run_async_task(Runner.run(triage_agent, user_input))
-        st.write("### 📬 Triage Agent Response")
-        st.info(result.final_output)
-        st.caption(f"Response by: {result.last_used_agent.name}")
+        classification = run_async_task(Runner.run(topic_classifier_agent, user_input))
+        topic = classification.final_output.strip().lower()
+
+        if topic not in ["math", "history"]:
+            st.error("Invalid input. Please ask a question related to math or history.")
+        else:
+            result = run_async_task(Runner.run(triage_agent, user_input))
+            st.write("### 📬 Triage Agent Response")
+            st.info(result.final_output)
+            st.caption(f"Response by: {result.last_used_agent.name}")
