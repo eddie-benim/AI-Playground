@@ -59,7 +59,7 @@ class TopicLabel(BaseModel):
 
 topic_classifier_agent = Agent(
     name="Topic Classifier",
-    instructions="Return only one word: either 'math' or 'history', depending on the question topic.",
+    instructions="You are a classifier that returns whether the topic is 'math' or 'history'. Respond in JSON with this format: {\"topic\": \"math\"} or {\"topic\": \"history\"}.",
     output_type=TopicLabel,
     model="gpt-4o"
 )
@@ -85,7 +85,6 @@ if st.button("Submit Question"):
     else:
         classification = run_async_task(Runner.run(topic_classifier_agent, user_input))
         topic = classification.final_output.topic.strip().lower()
-
         if topic not in ["math", "history"]:
             st.error("Invalid input. Only math or history questions are allowed.")
         else:
