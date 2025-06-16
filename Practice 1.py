@@ -84,7 +84,7 @@ if st.button("Submit Question"):
         st.warning("Please enter a question before submitting.")
     else:
         classification = run_async_task(Runner.run(topic_classifier_agent, user_input))
-        topic = classification.final_output.topic
+        topic = classification.final_output.topic.strip().lower()
         if topic not in ["math", "history"]:
             st.error("Invalid input. Only math or history questions are allowed.")
         else:
@@ -92,4 +92,3 @@ if st.button("Submit Question"):
             st.write("### Triage Agent Response")
             st.info(result.final_output)
             st.caption(f"Response by: {result.last_used_agent.name}")
-
