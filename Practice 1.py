@@ -84,7 +84,12 @@ if st.button("Submit Question"):
         st.warning("Please enter a question before submitting.")
     else:
         classification = run_async_task(Runner.run(topic_classifier_agent, user_input))
-        topic = classification.final_output.topic.strip().lower()
+        topic_data = classification.final_output
+        if isinstance(topic_data, dict):
+            topic = topic_data.get("topic", "").strip().lower()
+        else:
+            topic = topic_data.topic.strip().lower()
+
         if topic not in ["math", "history"]:
             st.error("Invalid input. Only math or history questions are allowed.")
         else:
