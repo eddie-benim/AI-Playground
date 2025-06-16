@@ -59,7 +59,7 @@ class TopicLabel(BaseModel):
 
 topic_classifier_agent = Agent(
     name="Topic Classifier",
-    instructions="You are a classifier that returns whether the topic is 'math' or 'history'. Respond in JSON with this format: {\"topic\": \"math\"} or {\"topic\": \"history\"}.",
+    instructions='You are a classifier that returns whether the topic is "math" or "history". Respond in JSON with this format: {"topic": "math"} or {"topic": "history"}.',
     output_type=TopicLabel,
     model="gpt-4o"
 )
@@ -84,11 +84,24 @@ if st.button("Submit Question"):
         st.warning("Please enter a question before submitting.")
     else:
         classification = run_async_task(Runner.run(topic_classifier_agent, user_input))
-        topic = classification.final_output.topic.strip().lower()
-        if topic not in ["math", "history"]:
-            st.error("Invalid input. Only math or history questions are allowed.")
+        
+        # Debug prints (remove after debugging)
+        st.write("Type of classification.final_output:", type(classification.final_output))
+        st.write("classification.final_output:", classification.final_output)
+
+        topic_raw = getattr(classification.final_output, "topic", None)
+        if topic_raw is None:
+            st.error("Could not classify the topic.")
         else:
-            result = run_async_task(Runner.run(triage_agent, user_input))
-            st.write("### Triage Agent Response")
-            st.info(result.final_output)
-            st.caption(f"Response by: {result.last_used_agent.name}")
+            if isinstance(topic_raw, str):
+                topic = topic_raw.strip().lower()
+            else:
+                topic = str(topic_raw).strip().lower()
+
+            if topic not in ["math", "history"]:
+                st.error("Invalid input. Only math or history questions are allowed.")
+            else:
+                result = run_async_task(Runner.run(triage_agent, user_input))
+                st.write("### Triage Agent Response")
+                st.info(result.final_output)
+                st.caption(f"Response by: {result.last_used_agent.name}")
