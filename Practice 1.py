@@ -14,26 +14,26 @@ set_default_openai_key(st.secrets["OPENAI_API_KEY"])
 assistant_agent = Agent(
     name="Assistant",
     instructions="You are a helpful assistant.",
-    model="gpt-4.1-nano"
+    model="gpt-4o"
 )
 
 history_agent = Agent(
     name="History Tutor",
     instructions="Help with history questions.",
-    model="gpt-4.1-nano"
+    model="gpt-4o"
 )
 
 math_agent = Agent(
     name="Math Tutor",
     instructions="Help with math questions.",
-    model="gpt-4.1-nano"
+    model="gpt-4o"
 )
 
 triage_agent = Agent(
     name="Triage Agent",
     instructions="Route the question to the appropriate tutor.",
     handoffs=[history_agent, math_agent],
-    model="gpt-4.1-nano"
+    model="gpt-4o"
 )
 
 class HomeworkAnswer(BaseModel):
@@ -44,7 +44,7 @@ homework_agent = Agent(
     name="Homework Checker",
     instructions="Determine if the question is homework and provide an explanation if it is.",
     output_type=HomeworkAnswer,
-    model="gpt-4.1-nano"
+    model="gpt-4o"
 )
 
 @function_tool
@@ -55,7 +55,7 @@ weather_agent = Agent(
     name="Weather Agent",
     instructions="You can answer questions about the weather.",
     tools=[get_weather],
-    model="gpt-4.1-nano"
+    model="gpt-4o"
 )
 
 # 🧠 Run async safely (Streamlit compatible)
