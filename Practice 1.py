@@ -62,9 +62,10 @@ weather_agent = Agent(
 def run_async_task(task):
     return asyncio.get_event_loop().run_until_complete(task)
 
-# 🧪 Streamlit UI
+# 🧠 OpenAI Agent SDK Demo
 st.title("🧠 OpenAI Agent SDK Demo")
 
+# --- Static Buttons ---
 if st.button("Generate Haiku"):
     result = run_async_task(Runner.run(assistant_agent, "Write a haiku about recursion in programming."))
     st.write("### ✍️ Haiku Output")
@@ -74,3 +75,17 @@ if st.button("Ask Triage Agent: 'What is life?'"):
     result = run_async_task(Runner.run(triage_agent, "What is life?"))
     st.write("### 🧭 Routed Answer")
     st.info(result.final_output)
+
+# --- New: User Input for Routing ---
+st.markdown("---")
+st.subheader("Ask a question and let the Triage Agent route it:")
+
+user_input = st.text_input("💬 Enter your question here")
+
+if st.button("Submit Question"):
+    if user_input.strip():
+        result = run_async_task(Runner.run(triage_agent, user_input))
+        st.write("### 📬 Triage Agent Response")
+        st.info(result.final_output)
+    else:
+        st.warning("Please enter a question before submitting.")
