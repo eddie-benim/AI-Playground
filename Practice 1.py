@@ -1,9 +1,13 @@
 import streamlit as st
 import asyncio
+import nest_asyncio
 from agents import set_default_openai_key, Agent, Runner, function_tool
 from pydantic import BaseModel
 
-# Set your API key (keep it secret in production!)
+# Patch the event loop to avoid runtime errors in Streamlit
+nest_asyncio.apply()
+
+# Set your API key from Streamlit secrets
 set_default_openai_key(st.secrets["OPENAI_API_KEY"])
 
 # Define agents
@@ -13,8 +17,17 @@ assistant_agent = Agent(
     model="gpt-4.1-nano"
 )
 
-history_agent = Agent(name="History Tutor", instructions="Help with history questions.", model="gpt-4.1-nano")
-math_agent = Agent(name="Math Tutor", instructions="Help with math questions.", model="gpt-4.1-nano")
+history_agent = Agent(
+    name="History Tutor",
+    instructions="Help with history questions.",
+    model="gpt-4.1-nano"
+)
+
+math_agent = Agent(
+    name="Math Tutor",
+    instructions="Help with math questions.",
+    model="gpt-4.1-nano"
+)
 
 triage_agent = Agent(
     name="Triage Agent",
@@ -45,25 +58,19 @@ weather_agent = Agent(
     model="gpt-4.1-nano"
 )
 
-# 🧠 Helper function to run async safely
+# 🧠 Run async safely (Streamlit compatible)
 def run_async_task(task):
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-    if loop.is_running():
-        return asyncio.ensure_future(task)
-    else:
-        return loop.run_until_complete(task)
+    return asyncio.get_event_loop().run_until_complete(task)
 
 # 🧪 Streamlit UI
-st.title("Agent SDK Demo")
+st.title("🧠 OpenAI Agent SDK Demo")
 
 if st.button("Generate Haiku"):
     result = run_async_task(Runner.run(assistant_agent, "Write a haiku about recursion in programming."))
-    st.write(result.final_output)
+    st.write("### ✍️ Haiku Output")
+    st.success(result.final_output)
 
 if st.button("Ask Triage Agent: 'What is life?'"):
     result = run_async_task(Runner.run(triage_agent, "What is life?"))
-    st.write(result.final_output)
+    st.write("### 🧭 Routed Answer")
+    st.info(result.final_output)
