@@ -101,5 +101,3 @@ if st.button("Submit Question"):
                 result = run_async_task(Runner.run(triage_agent, user_input))
                 st.write("### Triage Agent Response")
                 st.info(result.final_output)
-                st.caption(f"Response by: {triage_agent.name}")
-
