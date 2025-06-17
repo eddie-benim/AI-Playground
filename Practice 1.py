@@ -89,14 +89,19 @@ if st.button("Submit Question"):
         st.warning("Please enter a question before submitting.")
     else:
         classification = run_async_task(Runner.run(topic_classifier_agent, user_input))
-        topic_label = classification.final_output
-        if not isinstance(topic_label, TopicLabel):
-            st.error("Unexpected format from topic classifier.")
+        topic_raw = getattr(classification.final_output, "topic", None)
+        if topic_raw is None:
+            st.error("Could not classify the topic.")
         else:
-            topic = topic_label.topic.strip().lower()
+            if isinstance(topic_raw, str):
+                topic = topic_raw.strip().lower()
+            else:
+                topic = str(topic_raw).strip().lower()
+
             if topic not in ["math", "history"]:
                 st.error("Invalid input. Only math or history questions are allowed.")
             else:
+                # Run triage agent to route question and get answer
                 result = run_async_task(Runner.run(triage_agent, user_input))
                 st.write("### Triage Agent Response")
                 st.info(result.final_output)
