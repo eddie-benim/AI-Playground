@@ -85,7 +85,7 @@ st.subheader("Ask a question and let the Triage Agent route it:")
 user_input = st.text_input("Enter your question here")
 
 if st.button("Submit Question"):
-    if not user_input.strip():
+    if not user_input or len(user_input) == 0:
         st.warning("Please enter a question before submitting.")
     else:
         classification = run_async_task(Runner.run(topic_classifier_agent, user_input))
@@ -93,15 +93,11 @@ if st.button("Submit Question"):
         if topic_raw is None:
             st.error("Could not classify the topic.")
         else:
-            if isinstance(topic_raw, str):
-                topic = topic_raw.strip().lower()
-            else:
-                topic = str(topic_raw).strip().lower()
+            topic_lower = str(topic_raw).lower()
 
-            if topic not in ["math", "history"]:
+            if topic_lower != "math" and topic_lower != "history":
                 st.error("Invalid input. Only math or history questions are allowed.")
             else:
-                # Run triage agent to route question and get answer
                 result = run_async_task(Runner.run(triage_agent, user_input))
                 st.write("### Triage Agent Response")
                 st.info(result.final_output)
