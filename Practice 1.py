@@ -65,7 +65,12 @@ topic_classifier_agent = Agent(
 )
 
 def run_async_task(task):
-    return asyncio.get_event_loop().run_until_complete(task)
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    return loop.run_until_complete(task)
 
 st.title("OpenAI Agent SDK Demo")
 
@@ -84,20 +89,11 @@ if st.button("Submit Question"):
         st.warning("Please enter a question before submitting.")
     else:
         classification = run_async_task(Runner.run(topic_classifier_agent, user_input))
-        
-        # Debug prints (remove after debugging)
-        st.write("Type of classification.final_output:", type(classification.final_output))
-        st.write("classification.final_output:", classification.final_output)
-
-        topic_raw = getattr(classification.final_output, "topic", None)
-        if topic_raw is None:
-            st.error("Could not classify the topic.")
+        topic_label = classification.final_output
+        if not isinstance(topic_label, TopicLabel):
+            st.error("Unexpected format from topic classifier.")
         else:
-            if isinstance(topic_raw, str):
-                topic = topic_raw.strip().lower()
-            else:
-                topic = str(topic_raw).strip().lower()
-
+            topic = topic_label.topic.strip().lower()
             if topic not in ["math", "history"]:
                 st.error("Invalid input. Only math or history questions are allowed.")
             else:
